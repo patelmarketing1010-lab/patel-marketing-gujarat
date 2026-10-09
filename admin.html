@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="gu">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PMG Admin Panel</title>
+<style>
+:root{--navy:#071b35;--navy2:#102b4d;--orange:#ff8a24;--bg:#f3f6fa;--ink:#14243a;--muted:#6b7b90;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:white;padding:22px 18px;border-bottom:4px solid var(--orange)}
+.wrap{max-width:1050px;margin:auto;padding:18px}h1{font-size:24px;margin:0 0 5px}h2{font-size:20px;margin-top:0}p{line-height:1.55}.tag{color:#ffd1a3;font-size:13px}
+.card{background:white;border:1px solid #e0e7ef;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 5px 18px #102b4d0b}
+label{display:block;font-weight:650;font-size:14px;margin:12px 0 5px}input,textarea,select{width:100%;padding:12px;border:1px solid #ccd6e2;border-radius:9px;font:inherit;background:white}textarea{min-height:90px;resize:vertical}
+button{background:var(--orange);color:#171f2c;border:0;border-radius:9px;padding:11px 15px;font-weight:750;font-size:14px;cursor:pointer;margin:6px 6px 0 0}button.secondary{background:var(--navy);color:white}button.light{background:#e9eef5;color:var(--navy)}button.danger{background:#ffe3e0;color:#8b2118}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hidden{display:none!important}.status{padding:11px;border-radius:9px;background:#eef4fa;margin:10px 0;font-size:14px;white-space:pre-wrap}.good{background:#e5f8eb;color:#14552b}.bad{background:#ffedeb;color:#8b2118}
+nav{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}nav button{margin:0}.navactive{outline:3px solid #ffbf80}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e4eaf1;vertical-align:top}th{background:#f4f7fa}
+.small{color:var(--muted);font-size:13px}.brand{font-weight:900;letter-spacing:.4px}.pill{display:inline-block;background:#fff0e1;color:#8c4800;border-radius:50px;padding:4px 9px;font-size:12px}
+@media(max-width:650px){.row{grid-template-columns:1fr}.wrap{padding:12px}.card{padding:14px}header{padding:18px 14px}table{font-size:12px}th,td{padding:7px}}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding:0 4px"><div class="brand">PMG <span style="color:var(--orange)">|</span> PATEL MARKETING GUJARAT</div><h1>Admin Panel</h1><div class="tag">Be Local, Be Recognised · Website & Lead Management</div></div></header>
+<main class="wrap">
+<div class="card" id="setupCard">
+<h2>પહેલી વાર Setup</h2>
+<p>આ પેનલ સુરક્ષિત રીતે ચલાવવા માટે Supabaseનું મફત project બનાવો અને નીચેની વિગતો ભરો. આ વિગતો તમારા Supabase projectની public URL અને anon/publishable key છે. <b>ક્યારેય service_role/secret key અહીં ન મૂકો.</b></p>
+<label>Supabase Project URL</label><input id="url" placeholder="https://your-project.supabase.co">
+<label>Supabase anon / publishable key</label><textarea id="key" placeholder="eyJ... અથવા sb_publishable_..." style="min-height:70px"></textarea>
+<button id="connectBtn">Connect</button><button class="light" id="forgetBtn">Clear settings on this device</button>
+<div class="small">Project URL અને public anon/publishable key બ્રાઉઝરમાં જ રહે છે. Admin access Supabase Auth અને database policiesથી નિયંત્રિત થાય છે.</div>
+</div>
+<div id="authCard" class="card hidden">
+<h2>Admin Login</h2><label>Email</label><input id="email" type="email" autocomplete="username" placeholder="તમારું admin email">
+<label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Password">
+<button id="loginBtn">Login</button><button class="light" id="resetBtn">Forgot password</button>
+<div id="authStatus" class="status">Supabase સાથે જોડાવા માટે રાહ જુઓ.</div>
+</div>
+<div id="app" class="hidden">
+<div class="row">
+<div class="card"><div class="small">કુલ Leads (લોડ થયેલી યાદી)</div><div id="leadCount" style="font-size:32px;font-weight:850">0</div></div>
+<div class="card"><div class="small">Website Content Items</div><div id="contentCount" style="font-size:32px;font-weight:850">0</div></div>
+</div>
+<nav>
+<button class="secondary navactive" data-tab="dashboard">Dashboard</button><button class="light" data-tab="content">Content</button><button class="light" data-tab="leads">Leads</button><button class="light" data-tab="settings">Settings</button><button id="logoutBtn" class="danger">Logout</button>
+</nav>
+<div id="appStatus" class="status">Connected.</div>
+<section id="tab-dashboard" class="tab card"><h2>PMG Dashboard</h2><p>અહીંથી તમે વેબસાઇટનું content અને customer inquiries મેનેજ કરી શકો છો.</p><p class="small">નોંધ: Content tabમાં સાચવેલું લખાણ Supabaseમાં જાય છે. હાલની HTML વેબસાઇટમાં તે દેખાડવા માટે નીચે આપેલી integration સૂચના મુજબ website codeમાં connection ઉમેરવું પડશે.</p></section>
+<section id="tab-content" class="tab card hidden">
+<h2>Website Content</h2><p class="small">Key અનન્ય રાખો, ઉદાહરણ: hero_title, hero_subtitle, whatsapp_number. Text fieldમાં content મૂકો.</p>
+<input id="contentId" type="hidden">
+<label>Content Key</label><input id="contentKey" placeholder="hero_title">
+<label>Content Value</label><textarea id="contentValue" placeholder="તમારા બિઝનેસને ડિજિટલ ઓળખ આપીએ"></textarea>
+<button id="saveContent">Save content</button><button id="clearContentForm" class="light">Clear form</button>
+<div style="overflow:auto;margin-top:14px"><table><thead><tr><th>Key</th><th>Value</th><th>Action</th></tr></thead><tbody id="contentRows"></tbody></table></div>
+</section>
+<section id="tab-leads" class="tab card hidden">
+<h2>Customer Leads</h2><p class="small">Website formમાંથી leads મોકલવા માટે SQL અને integration steps follow કરો. અહીં status update અને delete કરી શકશો.</p>
+<div style="overflow:auto"><table><thead><tr><th>Customer</th><th>Contact / Need</th><th>Status</th><th>Action</th></tr></thead><tbody id="leadRows"></tbody></table></div>
+</section>
+<section id="tab-settings" class="tab card hidden"><h2>Settings</h2><p>Admin account બનાવવા માટે Supabase Dashboard → Authentication → Users → Add user પસંદ કરો. Sign-up public રીતે ખુલ્લું ન રાખો.</p><p>Admin access માટે આ accountનું email SQL setupમાં admin allow-list tableમાં ઉમેરો. SQL fileમાં આપેલી સૂચનાઓ અનુસરો.</p><button class="light" id="reloadBtn">Reload data</button></section>
+</div>
+<div class="small" style="text-align:center;padding:20px">PMG · Be Local, Be Recognised</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+let sb=null, contents=[], leads=[];
+const $=id=>document.getElementById(id);
+function msg(id,text,kind=''){const el=$(id);el.textContent=text;el.className='status '+kind}
+function savedConfig(){try{return JSON.parse(localStorage.getItem('pmg_supabase_config')||'{}')}catch{return {}}}
+function showAuth(){ $('setupCard').classList.add('hidden');$('authCard').classList.remove('hidden');}
+function connect(url,key){if(!window.supabase){alert('Supabase library load થઈ નથી. Internet ચાલુ કરો અને ફરી પ્રયાસ કરો.');return}
+ if(!url.startsWith('https://')||!key.trim()){alert('Project URL અને public key બંને દાખલ કરો.');return}
+ sb=window.supabase.createClient(url.trim(),key.trim());localStorage.setItem('pmg_supabase_config',JSON.stringify({url:url.trim(),key:key.trim()}));showAuth();msg('authStatus','Connection તૈયાર છે. હવે admin login કરો.','good')}
+$('connectBtn').onclick=()=>connect($('url').value,$('key').value);
+$('forgetBtn').onclick=()=>{localStorage.removeItem('pmg_supabase_config');$('url').value='';$('key').value='';alert('આ deviceમાંથી settings દૂર થઈ. Supabase data delete થયું નથી.')};
+const cfg=savedConfig();if(cfg.url&&cfg.key){$('url').value=cfg.url;$('key').value=cfg.key;connect(cfg.url,cfg.key)}
+$('loginBtn').onclick=async()=>{try{const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await loadApp()}catch(e){msg('authStatus','Login error: '+e.message,'bad')}};
+$('resetBtn').onclick=async()=>{try{if(!sb)throw Error('પહેલા connect કરો');const {error}=await sb.auth.resetPasswordForEmail($('email').value.trim());if(error)throw error;msg('authStatus','જો આ email accountમાં છે, તો password reset link મોકલાશે.','good')}catch(e){msg('authStatus',e.message,'bad')}};
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();$('app').classList.add('hidden');$('authCard').classList.remove('hidden')};
+async function loadApp(){ $('authCard').classList.add('hidden');$('app').classList.remove('hidden');await loadData()}
+async function loadData(){try{const [c,l]=await Promise.all([sb.from('site_content').select('*').order('key'),sb.from('leads').select('*').order('created_at',{ascending:false}).limit(200)]);if(c.error)throw c.error;if(l.error)throw l.error;contents=c.data||[];leads=l.data||[];renderContent();renderLeads();$('contentCount').textContent=contents.length;$('leadCount').textContent=leads.length;msg('appStatus','Data સફળતાપૂર્વક લોડ થયો.','good')}catch(e){msg('appStatus','Database error: '+e.message+'\\nSQL schema અને policies યોગ્ય રીતે લાગુ થયા છે કે નહીં તે તપાસો.','bad')}}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderContent(){$('contentRows').innerHTML=contents.map(r=>`<tr><td><b>${esc(r.key)}</b></td><td>${esc(r.value)}</td><td><button class="light" onclick="editContent('${esc(r.id)}')">Edit</button><button class="danger" onclick="deleteContent('${esc(r.id)}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="3">હજુ content ઉમેર્યું નથી.</td></tr>'}
+window.editContent=id=>{const r=contents.find(x=>x.id===id);if(!r)return;$('contentId').value=r.id;$('contentKey').value=r.key;$('contentValue').value=r.value;window.scrollTo({top:0,behavior:'smooth'})};
+$('clearContentForm').onclick=()=>{$('contentId').value='';$('contentKey').value='';$('contentValue').value=''};
+$('saveContent').onclick=async()=>{try{const key=$('contentKey').value.trim(),value=$('contentValue').value.trim(),id=$('contentId').value;if(!key)throw Error('Content Key જરૂરી છે');let q=id?sb.from('site_content').update({key,value,updated_at:new Date().toISOString()}).eq('id',id):sb.from('site_content').upsert({key,value,updated_at:new Date().toISOString()},{onConflict:'key'});const {error}=await q;if(error)throw error;$('clearContentForm').click();await loadData()}catch(e){msg('appStatus','Save error: '+e.message,'bad')}};
+window.deleteContent=async id=>{if(!confirm('આ content delete કરવું છે?'))return;const {error}=await sb.from('site_content').delete().eq('id',id);if(error)msg('appStatus',error.message,'bad');else await loadData()};
+function renderLeads(){$('leadRows').innerHTML=leads.map(r=>`<tr><td><b>${esc(r.name||'—')}</b><div class="small">${esc(new Date(r.created_at).toLocaleString())}</div></td><td>${esc(r.phone||'—')}<div>${esc(r.need||'')}</div></td><td><select onchange="updateLead('${esc(r.id)}',this.value)">${['New','Contacted','Follow-up','Converted','Closed'].map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}</select></td><td><button class="danger" onclick="deleteLead('${esc(r.id)}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">હજુ leads નથી.</td></tr>'}
+window.updateLead=async(id,status)=>{const {error}=await sb.from('leads').update({status}).eq('id',id);if(error)msg('appStatus',error.message,'bad');else await loadData()};
+window.deleteLead=async id=>{if(!confirm('આ lead delete કરવી છે?'))return;const {error}=await sb.from('leads').delete().eq('id',id);if(error)msg('appStatus',error.message,'bad');else await loadData()};
+document.querySelectorAll('nav [data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));$('tab-'+b.dataset.tab).classList.remove('hidden');document.querySelectorAll('nav [data-tab]').forEach(x=>{x.className=x===b?'secondary navactive':'light'})});
+$('reloadBtn').onclick=loadData;
+</script>
+</body></html>
